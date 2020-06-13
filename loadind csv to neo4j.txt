@@ -1,0 +1,22 @@
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS 
+FROM "file:///letme.csv" AS line
+
+WITH DISTINCT line, (line.`Date_received`) AS date
+WHERE line.`Company_response` IS NOT NULL AND
+      line.Company IS NOT NULL
+
+CREATE (complaint:Complaint { id: (line.`Complaint_ID`) })
+SET complaint.Date_received = date
+
+MERGE (medium:medium {type: (line.`Submitted via`) })
+MERGE (company:Company { name: (line.`Company`) })
+MERGE (response:Response { name: (line.`Company_response`) })
+MERGE (product:Product { name: (line.Product) })
+MERGE (issue:Issue {name: (line.Issue) })
+
+CREATE (complaint)-[:against]->(company)
+CREATE (complaint)-[:via]->(medium)
+CREATE (response)-[:for]->(complaint)
+CREATE (complaint)-[:ABOUT]->(product)
+CREATE (complaint)-[:with]->(issue)
